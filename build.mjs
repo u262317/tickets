@@ -10,12 +10,19 @@ if (!src || !password) {
   process.exit(1);
 }
 
+// Ticket icon for the browser tab (inline SVG, so no extra file to host).
+const ICON_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64"><path fill="#0e6b73" d="M6 14h52a2 2 0 0 1 2 2v10a6 6 0 0 0 0 12v10a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V38a6 6 0 0 0 0-12V16a2 2 0 0 1 2-2z"/><path stroke="#fff" stroke-width="3" stroke-dasharray="4 4" d="M22 18v28"/><path fill="#fff" d="m41 24 2.6 5.3 5.9.9-4.3 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.3-4.1 5.9-.9z"/></svg>';
+const ICON = '<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,' + encodeURIComponent(ICON_SVG) + '">';
+
 const ITER = 250000;
 const salt = randomBytes(16);
 const iv = randomBytes(12);
 const key = pbkdf2Sync(password, salt, ITER, 32, "sha256");
 const cipher = createCipheriv("aes-256-gcm", key, iv);
-const enc = Buffer.concat([cipher.update(readFileSync(src, "utf8"), "utf8"), cipher.final(), cipher.getAuthTag()]);
+const enc = Buffer.concat([cipher.update(withIcon(readFileSync(src, "utf8")), "utf8"), cipher.final(), cipher.getAuthTag()]);
+function withIcon(html) {
+  return html.includes('rel="icon"') ? html : html.replace("</head>", ICON + "\n</head>");
+}
 const b64 = b => b.toString("base64");
 
 const shell = `<!DOCTYPE html>
@@ -25,6 +32,7 @@ const shell = `<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex">
 <title>Tickets</title>
+${ICON}
 <style>
   :root { --bg:#eef1f4; --ink:#17202e; --muted:#66717f; --line:#d3d9e0; --accent:#0e6b73; --err:#b3261e;
     --font: "Avenir Next","Segoe UI",system-ui,sans-serif; }
