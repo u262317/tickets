@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Tickets</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #eef1f4;
+    --ink: #17202e;
+    --muted: #66717f;
+    --line: #d3d9e0;
+    --accent: #0e6b73;
+    --font: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+    box-sizing: border-box;
+    padding-top: env(safe-area-inset-top, 0px);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #141b26; --ink: #e8edf3; --muted: #93a0b0; --line: #2b3646; --accent: #5cc4cc;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #141b26; --ink: #e8edf3; --muted: #93a0b0; --line: #2b3646; --accent: #5cc4cc;
+  }
+  html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+  *, *::before, *::after { box-sizing: inherit; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--font);
+    font-size: 17px;
+    line-height: 1.35;
+  }
+  main { max-width: 640px; margin: 0 auto; padding: 40px 20px 64px; }
+  h1 { font-size: 2.4rem; font-weight: 800; letter-spacing: -0.02em; margin: 0 0 4px; }
+  .count { color: var(--muted); margin: 0 0 36px; }
+  h2 {
+    font-size: 1rem; font-weight: 600; color: var(--accent);
+    margin: 36px 0 4px; padding-bottom: 8px; border-bottom: 2px solid var(--accent);
+  }
+  h2.past { color: var(--muted); border-color: var(--line); }
+  ul { list-style: none; margin: 0; padding: 0; }
+  li {
+    display: grid; grid-template-columns: 64px 1fr; gap: 16px;
+    align-items: center; padding: 16px 0; border-bottom: 1px solid var(--line);
+  }
+  .day { text-align: center; line-height: 1; }
+  .day .num { display: block; font-size: 2.1rem; font-weight: 800; letter-spacing: -0.03em; }
+  .day .wk { display: block; font-size: 0.85rem; color: var(--muted); margin-top: 4px; }
+  .name { font-size: 1.15rem; font-weight: 600; overflow-wrap: anywhere; }
+  .time { color: var(--muted); margin-top: 2px; }
+  .loc { color: var(--muted); margin-top: 2px; }
+  li.done { opacity: 0.55; }
+  .empty { margin-top: 48px; color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Tickets</h1>
+  <p class="count" id="count"></p>
+  <div id="list"></div>
+</main>
+
+<script>
+  // Add events here: { name: "Event name", date: "YYYY-MM-DD", time: "HH:MM", location: "Venue, Town" } (24-hour time)
+  const EVENTS = [
+    { name: "Simon Brodkin: Unleashed", date: "2026-10-08", time: "18:30", location: "Lighthouse, Poole" },
+    { name: "AFC Bournemouth v SK Sturm Graz", date: "2026-10-15", time: "20:00", location: "Vitality Stadium, Bournemouth" },
+    { name: "AFC Bournemouth v AC Milan", date: "2026-10-22", time: "20:00", location: "Vitality Stadium, Bournemouth" },
+    { name: "Transvision Vamp", date: "2026-10-21", time: "19:00", location: "O2 Academy Bournemouth, Bournemouth" },
+    { name: "Dom Joly's Trigger Happy TV: The 25th Anniversary Tour", date: "2026-11-06", time: "19:30", location: "The Barn, Ringwood" },
+    { name: "Professor Brian Cox", date: "2026-11-08", time: "19:30", location: "BIC Windsor Hall, Bournemouth" },
+    { name: "Paul Smith: Happy", date: "2026-11-18", time: "20:00", location: "BIC Windsor Hall, Bournemouth" },
+    { name: "AFC Bournemouth v FC Viktoria Plzeň", date: "2026-12-10", time: "17:45", location: "Vitality Stadium, Bournemouth" },
+    { name: "Vortex: Spinning Through Time (A Children's Production)", date: "2026-11-29", time: "19:00", location: "Bournemouth Pavilion Theatre, Bournemouth" },
+    { name: "AFC Bournemouth v Hapoel Be'er Sheva", date: "2027-01-28", time: "20:00", location: "Vitality Stadium, Bournemouth" },
+    { name: "Sonny Fodera", date: "2027-03-27", time: "18:30", location: "The O2 Arena, London" },
+    { name: "Chase & Status", date: "2027-04-03", time: "18:30", location: "The O2 Arena, London" },
+    { name: "Romesh Ranganathan: Will Change Your Life", date: "2027-03-17", time: "20:00", location: "BIC Windsor Hall, Bournemouth" },
+    { name: "John Bishop: Let's Go Round Again", date: "2027-05-09", time: "19:30", location: "BIC Windsor Hall, Bournemouth" },
+    { name: "Josh Baker B2B Kettama B2B Prospa", date: "2027-07-02", time: "14:00", location: "Finsbury Park, London" },
+    { name: "Charlie and the Chocolate Factory", date: "2027-07-01", time: "14:00", location: "London Coliseum, London" },
+    { name: "Bournemouth Poppies v Horndean", date: "2026-10-06", time: "19:45", location: "Victoria Park, Bournemouth" },
+    { name: "Bemerton Heath Harlequins v Bournemouth Poppies", date: "2026-10-13", time: "19:45", location: "The 21st Century Glass Arena" },
+    { name: "Sherborne Town v Bournemouth Poppies", date: "2026-10-21", time: "19:45", location: "Nuova Italia Arena" },
+    { name: "Brockenhurst v Bournemouth Poppies", date: "2026-11-10", time: "19:45", location: "Meadens Skoda Arena" },
+    { name: "Bournemouth Poppies v Bashley", date: "2026-12-01", time: "19:45", location: "Victoria Park, Bournemouth" },
+    { name: "Bournemouth Poppies v Hamworthy Recreation", date: "2026-12-15", time: "19:45", location: "Victoria Park, Bournemouth" },
+    { name: "Bournemouth Poppies v Millbrook", date: "2026-12-22", time: "19:45", location: "Victoria Park, Bournemouth" },
+  ];
+
+  const list = document.getElementById("list");
+  const countEl = document.getElementById("count");
+
+  function parse(e) {
+    const [y, m, d] = e.date.split("-").map(Number);
+    const [hh, mm] = (e.time || "00:00").split(":").map(Number);
+    return new Date(y, m - 1, d, hh, mm);
+  }
+
+  function render() {
+    const now = new Date();
+    const items = EVENTS.map(e => ({ ...e, when: parse(e) })).sort((a, b) => a.when - b.when);
+    const upcoming = items.filter(e => e.when >= now);
+    const past = items.filter(e => e.when < now).reverse();
+
+    countEl.textContent = items.length === 0 ? "" :
+      upcoming.length + (upcoming.length === 1 ? " event coming up" : " events coming up");
+
+    if (items.length === 0) {
+      list.innerHTML = '<p class="empty">No tickets added yet.</p>';
+      return;
+    }
+
+    const monthFmt = new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" });
+    const wkFmt = new Intl.DateTimeFormat(undefined, { weekday: "short" });
+    const timeFmt = new Intl.DateTimeFormat(undefined, { hour: "numeric", minute: "2-digit" });
+
+    const esc = s => s.replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+
+    const row = (e, done) =>
+      `<li class="${done ? "done" : ""}">
+        <div class="day"><span class="num">${e.when.getDate()}</span><span class="wk">${wkFmt.format(e.when)}</span></div>
+        <div><div class="name">${esc(e.name)}</div><div class="time">${timeFmt.format(e.when)}</div>${e.location ? `<div class="loc">${esc(e.location)}</div>` : ""}</div>
+      </li>`;
+
+    let html = "";
+    let current = "";
+    for (const e of upcoming) {
+      const label = monthFmt.format(e.when);
+      if (label !== current) {
+        if (current) html += "</ul>";
+        html += `<h2>${label}</h2><ul>`;
+        current = label;
+      }
+      html += row(e, false);
+    }
+    if (current) html += "</ul>";
+
+    if (past.length) {
+      html += `<h2 class="past">Past</h2><ul>${past.map(e => row(e, true)).join("")}</ul>`;
+    }
+    list.innerHTML = html;
+  }
+
+  render();
+</script>
+</body>
+</html>
