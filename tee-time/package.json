@@ -1,0 +1,7 @@
+{
+  "name": "tee-time-bot",
+  "private": true,
+  "type": "module",
+  "scripts": { "book": "node book.mjs" },
+  "dependencies": { "playwright": "^1.48.0" }
+}
